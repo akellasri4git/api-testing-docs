@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Testing AI Documentation Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #F5F5F5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #333;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1565C0 0%, #1976D2 100%);
+            color: white;
+            padding: 24px 48px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        /* Main Container */
+        .container {
+            flex: 1;
+            display: flex;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 48px;
+            gap: 40px;
+        }
+
+        /* Form Section */
+        .form-section {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #E0E0E0;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1565C0;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #BBDEFB;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #5D4037;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #BBDEFB;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        select:hover {
+            border-color: #64B5F6;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #42A5F5;
+            box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.1);
+        }
+
+        .provider-info {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #E3F2FD;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #1565C0;
+            border-left: 3px solid #42A5F5;
+        }
+
+        .provider-info.active {
+            display: block;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+
+        .badge-fast {
+            background: #C8E6C9;
+            color: #2E7D32;
+        }
+
+        .badge-slow {
+            background: #FFE0B2;
+            color: #E65100;
+        }
+
+        .badge-cloud {
+            background: #BBDEFB;
+            color: #1565C0;
+        }
+
+        .badge-local {
+            background: #D7CCC8;
+            color: #5D4037;
+        }
+
+        .upload-area {
+            border: 2px dashed #BBDEFB;
+            border-radius: 4px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #FAFAFA;
+        }
+
+        .upload-area:hover {
+            border-color: #42A5F5;
+            background: #F5F5F5;
+        }
+
+        .upload-area.dragging {
+            border-color: #42A5F5;
+            background: #E3F2FD;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #90A4AE;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .upload-text strong {
+            color: #1565C0;
+            font-weight: 500;
+        }
+
+        .file-info {
+            display: none;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #E8F5E9;
+            border-radius: 4px;
+            color: #2E7D32;
+            font-size: 14px;
+            font-weight: 500;
+            border-left: 3px solid #66BB6A;
+        }
+
+        .file-info.active {
+            display: block;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #1976D2;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1565C0;
+        }
+
+        .btn-primary:disabled {
+            background: #BBDEFB;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: #43A047;
+            color: white;
+            text-decoration: none;
+            display: none;
+            text-align: center;
+        }
+
+        .btn-success.active {
+            display: block;
+        }
+
+        .btn-success:hover {
+            background: #388E3C;
+        }
+
+        /* Status Section */
+        .status-section {
+            flex: 0 0 420px;
+        }
+
+        .progress-container {
+            display: none;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar-wrapper {
+            width: 100%;
+            height: 8px;
+            background: #E0E0E0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #42A5F5 0%, #A1887F 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .progress-percentage {
+            font-weight: 600;
+            color: #1565C0;
+            font-size: 28px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .message {
+            display: none;
+            padding: 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            border-left: 3px solid;
+        }
+
+        .message.active {
+            display: block;
+        }
+
+        .message-success {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border-color: #66BB6A;
+        }
+
+        .message-error {
+            background: #FFEBEE;
+            color: #C62828;
+            border-color: #EF5350;
+        }
+
+        .steps-list {
+            list-style: none;
+        }
+
+        .steps-list li {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: #FAFAFA;
+            border-left: 3px solid #BBDEFB;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .steps-list li strong {
+            display: block;
+            color: #333;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        .footer {
+            background: white;
+            border-top: 1px solid #E0E0E0;
+            padding: 24px 48px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .status-section {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 24px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .container {
+                padding: 24px;
+                gap: 24px;
+            }
+
+            .card {
+                padding: 24px;
+            }
+
+            .upload-area {
+                padding: 32px 16px;
+            }
+
+            .footer {
+                padding: 20px 24px;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #F5F5F5;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #BDBDBD;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9E9E9E;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>API Testing AI Documentation Generator</h1>
+        <p>Transform SoapUI & Postman projects into professional documentation</p>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Form Section -->
+        <div class="form-section">
+            <div class="card">
+                <h2 class="card-title">Configuration</h2>
+
+                <!-- Provider Selection -->
+                <div class="form-group">
+                    <label for="provider">AI Provider</label>
+                    <select id="provider" name="provider">
+                        <option value="">Select AI provider...</option>
+                    </select>
+                    <div id="provider-info" class="provider-info"></div>
+                </div>
+
+                <!-- Model Selection -->
+                <div class="form-group" id="model-group" style="display: none;">
+                    <label for="model">Model</label>
+                    <select id="model" name="model">
+                        <option value="">Default model</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">Upload File</h2>
+
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label>API Testing Project</label>
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">
+                            <strong>Click to select file</strong> or drag and drop<br>
+                            <span style="font-size: 12px; color: #999; margin-top: 8px; display: inline-block;">
+                                SoapUI XML or Postman JSON • Max 50MB
+                            </span>
+                        </div>
+                        <input type="file" id="file-input" accept=".xml,.json" style="display: none;">
+                    </div>
+                    <div class="file-info" id="file-info"></div>
+                </div>
+
+                <!-- Generate Button -->
+                <button class="btn btn-primary" id="generate-btn" disabled>
+                    Generate Documentation
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="status-section">
+            <div class="card">
+                <h2 class="card-title">Status</h2>
+
+                <!-- Messages -->
+                <div class="message message-success" id="success-message">
+                    Documentation generated successfully
+                </div>
+
+                <div class="message message-error" id="error-message"></div>
+
+                <!-- Progress Container -->
+                <div class="progress-container" id="progress-container">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span class="progress-percentage" id="progress-percentage">0%</span>
+                        <span id="progress-message">Waiting to start...</span>
+                    </div>
+                </div>
+
+                <!-- Download Button -->
+                <a href="#" class="btn btn-success" id="download-btn">
+                    Download Documentation
+                </a>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">Processing Steps</h2>
+                <ul class="steps-list">
+                    <li>
+                        <strong>1. Upload & Parse</strong>
+                        XML structure validation
+                    </li>
+                    <li>
+                        <strong>2. Extract Test Cases</strong>
+                        Test suites and steps identification
+                    </li>
+                    <li>
+                        <strong>3. AI Analysis</strong>
+                        Intelligent documentation generation
+                    </li>
+                    <li>
+                        <strong>4. Document Creation</strong>
+                        Professional DOCX formatting
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        &copy; 2024 API Testing AI Documentation Generator
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let providers = {};
+
+        // Load providers on page load
+        fetch('/providers')
+            .then(res => res.json())
+            .then(data => {
+                providers = data;
+                populateProviders();
+            });
+
+        function populateProviders() {
+            const providerSelect = document.getElementById('provider');
+            providerSelect.innerHTML = '<option value="">Select AI provider...</option>';
+
+            for (const [key, provider] of Object.entries(providers)) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = provider.name;
+                providerSelect.appendChild(option);
+            }
+        }
+
+        // Provider change handler
+        document.getElementById('provider').addEventListener('change', function(e) {
+            const provider = e.target.value;
+            const infoDiv = document.getElementById('provider-info');
+            const modelGroup = document.getElementById('model-group');
+            const modelSelect = document.getElementById('model');
+
+            if (provider && providers[provider]) {
+                const p = providers[provider];
+
+                // Show provider info
+                const speedBadge = p.speed.includes('Fast') ? 'badge-fast' : 'badge-slow';
+                const securityBadge = p.security === '100% Local' ? 'badge-local' : 'badge-cloud';
+
+                infoDiv.innerHTML = `
+                    <span class="badge ${speedBadge}">${p.speed}</span>
+                    <span class="badge ${securityBadge}">${p.security}</span>
+                `;
+                infoDiv.classList.add('active');
+
+                // Populate models
+                modelSelect.innerHTML = '<option value="">Default model</option>';
+                p.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    if (model === p.default) {
+                        option.selected = true;
+                    }
+                    modelSelect.appendChild(option);
+                });
+                modelGroup.style.display = 'block';
+
+                checkFormValidity();
+            } else {
+                infoDiv.classList.remove('active');
+                modelGroup.style.display = 'none';
+            }
+        });
+
+        // File upload handling
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', function(e) {
+            handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragging');
+        });
+
+        uploadArea.addEventListener('dragleave', function() {
+            uploadArea.classList.remove('dragging');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragging');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file) return;
+
+            // Check if file is XML or JSON
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.xml') && !fileName.endsWith('.json')) {
+                showError('Please upload a valid SoapUI XML or Postman JSON file');
+                return;
+            }
+
+            selectedFile = file;
+            const fileType = fileName.endsWith('.json') ? 'Postman JSON' : 'SoapUI XML';
+            const icon = fileName.endsWith('.json') ? '📦' : '📄';
+            fileInfo.textContent = `${icon} Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) - ${fileType}`;
+            fileInfo.classList.add('active');
+            checkFormValidity();
+        }
+
+        function checkFormValidity() {
+            const provider = document.getElementById('provider').value;
+            const generateBtn = document.getElementById('generate-btn');
+            generateBtn.disabled = !selectedFile || !provider;
+        }
+
+        // Generate documentation
+        document.getElementById('generate-btn').addEventListener('click', function() {
+            const provider = document.getElementById('provider').value;
+            const model = document.getElementById('model').value;
+
+            if (!selectedFile || !provider) return;
+
+            // Reset UI
+            hideError();
+            document.getElementById('success-message').classList.remove('active');
+            document.getElementById('download-btn').classList.remove('active');
+            document.getElementById('progress-container').classList.add('active');
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner"></span>Processing...';
+
+            // Upload file
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('provider', provider);
+            formData.append('model', model);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                // Start listening to progress
+                listenToProgress(data.job_id);
+            })
+            .catch(error => {
+                showError(error.message);
+                resetUI();
+            });
+        });
+
+        function listenToProgress(jobId) {
+            const eventSource = new EventSource(`/progress/${jobId}`);
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                if (data.error) {
+                    showError(data.error);
+                    eventSource.close();
+                    resetUI();
+                    return;
+                }
+
+                // Update progress bar
+                const progress = data.progress || 0;
+                document.getElementById('progress-bar').style.width = progress + '%';
+                document.getElementById('progress-percentage').textContent = progress + '%';
+                document.getElementById('progress-message').textContent = data.message || 'Processing...';
+
+                // Check if completed
+                if (data.status === 'completed') {
+                    eventSource.close();
+                    document.getElementById('success-message').classList.add('active');
+                    document.getElementById('download-btn').href = data.download_url;
+                    document.getElementById('download-btn').classList.add('active');
+
+                    const generateBtn = document.getElementById('generate-btn');
+                    generateBtn.innerHTML = 'Generate New Document';
+                    generateBtn.disabled = false;
+                }
+
+                if (data.status === 'error') {
+                    eventSource.close();
+                    showError(data.message);
+                    resetUI();
+                }
+            };
+
+            eventSource.onerror = function() {
+                eventSource.close();
+                showError('Connection lost. Please try again.');
+                resetUI();
+            };
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('error-message').classList.remove('active');
+        }
+
+        function resetUI() {
+            const generateBtn = document.getElementById('generate-btn');
+            generateBtn.innerHTML = 'Generate Documentation';
+            generateBtn.disabled = false;
+            document.getElementById('progress-container').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

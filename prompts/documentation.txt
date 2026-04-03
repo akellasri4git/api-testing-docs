@@ -1,0 +1,38 @@
+Analyze the provided project data and generate documentation
+for someone unfamiliar with the project.
+
+DOCUMENTATION FORMAT:
+
+SoapUI Project Documentation
+
+1. Project Summary
+   - Total test suites
+   - Total test cases
+   - Enabled vs disabled tests
+   - APIs / endpoints used
+
+2. Test Suite Details
+   For each test suite:
+     - Test suite name
+
+     For each test case:
+       - Test case name
+       - Whether it is enabled
+       - What this test case verifies (plain English)
+
+       Steps:
+         - Step name (if available)
+         - What the step does
+         - Endpoint or operation involved
+         - Whether it performs validation
+
+       Validations:
+         - Clearly explain what is validated
+         - Merge duplicate validations
+
+3. Duplicate & Redundancy Analysis
+   - Identify test cases that do the same thing
+   - Explain why they are similar or duplicated
+
+4. High-Level Overview
+   - 5–6 bullet points explaining the overall purpose

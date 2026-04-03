@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project xmlns:con="http://eviware.com/soapui/config"
+                    name="MiniProject"
+                    soapui-version="5.6.0">
+
+  <con:testSuite name="SampleSuite">
+    <con:testCase name="GetUserTest" failOnError="true">
+      
+      <con:testStep type="restrequest" name="GetUser">
+        <con:config service="UserService"
+                    resourcePath="/users/1"
+                    methodName="GET">
+          <con:restRequest>
+            <con:endpoint>https://api.example.com</con:endpoint>
+            <con:assertion type="Valid HTTP Status Codes">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+            <con:assertion type="Simple Contains">
+              <con:configuration>
+                <token>id</token>
+              </con:configuration>
+            </con:assertion>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+
+    </con:testCase>
+  </con:testSuite>
+
+</con:soapui-project>

@@ -1,0 +1,862 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="complex-ecommerce-project" name="Complex E-Commerce API Testing"
+                    resourceRoot="" soapui-version="5.7.0"
+                    xmlns:con="http://eviware.com/soapui/config">
+
+  <con:settings/>
+
+  <!-- REST Interface for User Management -->
+  <con:interface xsi:type="con:RestService" id="user-api" name="User Management API"
+                 type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:settings/>
+    <con:definitionCache/>
+    <con:endpoints>
+      <con:endpoint>https://api.ecommerce.com/v1</con:endpoint>
+    </con:endpoints>
+  </con:interface>
+
+  <!-- REST Interface for Product Management -->
+  <con:interface xsi:type="con:RestService" id="product-api" name="Product Management API"
+                 type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:settings/>
+    <con:definitionCache/>
+    <con:endpoints>
+      <con:endpoint>https://api.ecommerce.com/v2/products</con:endpoint>
+    </con:endpoints>
+  </con:interface>
+
+  <!-- SOAP Interface for Order Management -->
+  <con:interface xsi:type="con:WsdlInterface" id="order-soap" name="Order Management SOAP"
+                 type="wsdl" bindingName="{http://ecommerce.com/orders}OrderServiceBinding"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:settings/>
+    <con:definitionCache type="TEXT" rootPart="http://api.ecommerce.com/soap/orders.wsdl"/>
+    <con:endpoints>
+      <con:endpoint>http://api.ecommerce.com/soap/orders</con:endpoint>
+    </con:endpoints>
+
+    <con:operation id="createOrder" name="CreateOrder" bindingOperationName="CreateOrder"
+                   type="request-response" isOneWay="false"/>
+    <con:operation id="getOrderStatus" name="GetOrderStatus" bindingOperationName="GetOrderStatus"
+                   type="request-response" isOneWay="false"/>
+  </con:interface>
+
+  <!-- Test Suite 1: User Authentication Tests -->
+  <con:testSuite id="ts-user-auth" name="User Authentication Tests">
+    <con:settings/>
+    <con:runType>SEQUENTIAL</con:runType>
+
+    <!-- Test Case 1: Login with Valid Credentials -->
+    <con:testCase id="tc-login-valid" name="Login with Valid Credentials"
+                  failOnError="true" failTestCaseOnErrors="true" keepSession="false">
+      <con:settings/>
+      <con:testStep type="restrequest" name="POST Login Request" id="step-login">
+        <con:settings/>
+        <con:config service="User Management API" resourcePath="/auth/login" methodName="POST">
+          <con:restRequest name="POST Login Request" id="req-login" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v1</con:endpoint>
+            <con:request>{"username":"testuser","password":"Test@123"}</con:request>
+            <con:originalUri>https://api.ecommerce.com/v1/auth/login</con:originalUri>
+            <con:credentials>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:parameters/>
+
+            <!-- Assertion 1: Valid HTTP Status Code -->
+            <con:assertion type="Valid HTTP Status Codes" id="assert-status" name="Valid HTTP Status">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion 2: Response Time -->
+            <con:assertion type="Response SLA" id="assert-sla" name="Response Time Under 2s">
+              <con:configuration>
+                <SLA>2000</SLA>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion 3: JSONPath Match - Token Present -->
+            <con:assertion type="JsonPath Match" id="assert-token" name="Token Present in Response">
+              <con:configuration>
+                <path>$.token</path>
+                <content>.*</content>
+                <allowWildcards>true</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion 4: JSONPath Match - User ID -->
+            <con:assertion type="JsonPath Match" id="assert-userid" name="User ID Present">
+              <con:configuration>
+                <path>$.user.id</path>
+                <content>.*</content>
+                <allowWildcards>true</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion 5: Contains - Success Message -->
+            <con:assertion type="Simple Contains" id="assert-success" name="Contains Success">
+              <con:configuration>
+                <token>success</token>
+                <ignoreCase>true</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion 6: Not Contains - Error -->
+            <con:assertion type="Simple NotContains" id="assert-no-error" name="No Error Message">
+              <con:configuration>
+                <token>error</token>
+                <ignoreCase>true</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+
+      <!-- Property Transfer Step -->
+      <con:testStep type="transfer" name="Transfer Auth Token" id="step-transfer">
+        <con:settings/>
+        <con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:transfers setNullOnMissingSource="true" transferTextContent="true"
+                        failOnError="true" ignoreEmpty="false" transferToAll="false"
+                        entitize="false" transferChildNodes="false">
+            <con:name>Transfer Token</con:name>
+            <con:sourceType>Response</con:sourceType>
+            <con:sourceStep>POST Login Request</con:sourceStep>
+            <con:sourcePath>$.token</con:sourcePath>
+            <con:targetType>auth_token</con:targetType>
+            <con:targetStep/>
+          </con:transfers>
+        </con:config>
+      </con:testStep>
+
+      <con:properties/>
+    </con:testCase>
+
+    <!-- Test Case 2: Login with Invalid Credentials -->
+    <con:testCase id="tc-login-invalid" name="Login with Invalid Credentials"
+                  failOnError="false" failTestCaseOnErrors="false" keepSession="false">
+      <con:settings/>
+      <con:testStep type="restrequest" name="POST Invalid Login" id="step-invalid-login">
+        <con:settings/>
+        <con:config service="User Management API" resourcePath="/auth/login" methodName="POST">
+          <con:restRequest name="POST Invalid Login" id="req-invalid-login" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v1</con:endpoint>
+            <con:request>{"username":"baduser","password":"wrong"}</con:request>
+            <con:originalUri>https://api.ecommerce.com/v1/auth/login</con:originalUri>
+
+            <!-- Assertion: Expect 401 Unauthorized -->
+            <con:assertion type="Valid HTTP Status Codes" id="assert-401" name="Expect 401 Unauthorized">
+              <con:configuration>
+                <codes>401</codes>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Contains Error Message -->
+            <con:assertion type="Simple Contains" id="assert-error-msg" name="Contains Error Message">
+              <con:configuration>
+                <token>Invalid credentials</token>
+                <ignoreCase>true</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Token Should Not Be Present -->
+            <con:assertion type="JsonPath Count" id="assert-no-token" name="No Token in Response">
+              <con:configuration>
+                <path>$.token</path>
+                <expectedCount>0</expectedCount>
+                <allowWildcards>false</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+
+    <!-- Test Case 3: Register New User (DISABLED) -->
+    <con:testCase id="tc-register" name="Register New User"
+                  failOnError="true" failTestCaseOnErrors="true"
+                  keepSession="false" disabled="true">
+      <con:settings/>
+      <con:testStep type="restrequest" name="POST Register User" id="step-register">
+        <con:settings/>
+        <con:config service="User Management API" resourcePath="/auth/register" methodName="POST">
+          <con:restRequest name="POST Register User" id="req-register" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v1</con:endpoint>
+            <con:request>{"username":"newuser","email":"new@test.com","password":"NewPass@123"}</con:request>
+
+            <!-- Assertion: 201 Created -->
+            <con:assertion type="Valid HTTP Status Codes" id="assert-201" name="Expect 201 Created">
+              <con:configuration>
+                <codes>201</codes>
+              </con:configuration>
+            </con:assertion>
+
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+
+    <con:properties/>
+  </con:testSuite>
+
+  <!-- Test Suite 2: Product Management Tests -->
+  <con:testSuite id="ts-products" name="Product Management Tests">
+    <con:settings/>
+    <con:runType>SEQUENTIAL</con:runType>
+
+    <!-- Test Case 1: Get All Products -->
+    <con:testCase id="tc-list-products" name="Get All Products List"
+                  failOnError="true" failTestCaseOnErrors="true" keepSession="false">
+      <con:settings/>
+      <con:testStep type="restrequest" name="GET All Products" id="step-list-products">
+        <con:settings/>
+        <con:config service="Product Management API" resourcePath="/products" methodName="GET">
+          <con:restRequest name="GET All Products" id="req-list-products" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v2/products</con:endpoint>
+            <con:request/>
+            <con:originalUri>https://api.ecommerce.com/v2/products/products</con:originalUri>
+
+            <!-- Assertion: 200 OK -->
+            <con:assertion type="Valid HTTP Status Codes" id="assert-200" name="Expect 200 OK">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Response is JSON Array -->
+            <con:assertion type="JsonPath Existence Match" id="assert-array" name="Response is Array">
+              <con:configuration>
+                <path>$[*]</path>
+                <expectedContent>true</expectedContent>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: At Least 1 Product -->
+            <con:assertion type="JsonPath Count" id="assert-count" name="At Least 1 Product">
+              <con:configuration>
+                <path>$[*]</path>
+                <expectedCount>1</expectedCount>
+                <allowWildcards>false</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Product Has Required Fields -->
+            <con:assertion type="JsonPath Match" id="assert-product-id" name="Product Has ID">
+              <con:configuration>
+                <path>$[0].id</path>
+                <content>.*</content>
+                <allowWildcards>true</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <con:assertion type="JsonPath Match" id="assert-product-name" name="Product Has Name">
+              <con:configuration>
+                <path>$[0].name</path>
+                <content>.*</content>
+                <allowWildcards>true</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <con:assertion type="JsonPath Match" id="assert-product-price" name="Product Has Price">
+              <con:configuration>
+                <path>$[0].price</path>
+                <content>[0-9]+\.[0-9]{2}</content>
+                <allowWildcards>true</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+
+    <!-- Test Case 2: Get Product by ID -->
+    <con:testCase id="tc-get-product" name="Get Product by ID"
+                  failOnError="true" failTestCaseOnErrors="true" keepSession="false">
+      <con:settings/>
+      <con:testStep type="restrequest" name="GET Product Details" id="step-get-product">
+        <con:settings/>
+        <con:config service="Product Management API" resourcePath="/products/12345" methodName="GET">
+          <con:restRequest name="GET Product Details" id="req-get-product" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v2/products</con:endpoint>
+            <con:request/>
+            <con:originalUri>https://api.ecommerce.com/v2/products/products/12345</con:originalUri>
+
+            <!-- Assertion: 200 OK -->
+            <con:assertion type="Valid HTTP Status Codes" id="assert-200" name="Expect 200 OK">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Product ID Matches -->
+            <con:assertion type="JsonPath Match" id="assert-id-match" name="Product ID is 12345">
+              <con:configuration>
+                <path>$.id</path>
+                <content>12345</content>
+                <allowWildcards>false</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Has Description -->
+            <con:assertion type="JsonPath Existence Match" id="assert-desc" name="Has Description">
+              <con:configuration>
+                <path>$.description</path>
+                <expectedContent>true</expectedContent>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Has Stock Info -->
+            <con:assertion type="JsonPath Match" id="assert-stock" name="Stock is Positive">
+              <con:configuration>
+                <path>$.stock</path>
+                <content>[1-9][0-9]*</content>
+                <allowWildcards>true</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Price is Valid -->
+            <con:assertion type="Script Assertion" id="assert-price-script" name="Price is Valid Number">
+              <con:configuration>
+                <scriptText>def response = messageExchange.response.contentAsString
+def json = new groovy.json.JsonSlurper().parseText(response)
+assert json.price != null
+assert json.price > 0
+assert json.price &lt; 10000</scriptText>
+              </con:configuration>
+            </con:assertion>
+
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+
+    <!-- Test Case 3: Search Products -->
+    <con:testCase id="tc-search-products" name="Search Products by Keyword"
+                  failOnError="true" failTestCaseOnErrors="true" keepSession="false">
+      <con:settings/>
+      <con:testStep type="restrequest" name="GET Search Results" id="step-search">
+        <con:settings/>
+        <con:config service="Product Management API" resourcePath="/products/search" methodName="GET">
+          <con:restRequest name="GET Search Results" id="req-search" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v2/products</con:endpoint>
+            <con:request/>
+            <con:originalUri>https://api.ecommerce.com/v2/products/products/search?q=laptop</con:originalUri>
+            <con:parameters>
+              <con:parameter>
+                <con:name>q</con:name>
+                <con:value>laptop</con:value>
+                <con:style>QUERY</con:style>
+              </con:parameter>
+            </con:parameters>
+
+            <!-- Assertion: 200 OK -->
+            <con:assertion type="Valid HTTP Status Codes" id="assert-200" name="Expect 200 OK">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Results Contain Keyword -->
+            <con:assertion type="Simple Contains" id="assert-keyword" name="Contains 'laptop'">
+              <con:configuration>
+                <token>laptop</token>
+                <ignoreCase>true</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Has Results -->
+            <con:assertion type="JsonPath Count" id="assert-results" name="Has Search Results">
+              <con:configuration>
+                <path>$.results[*]</path>
+                <expectedCount>1</expectedCount>
+                <allowWildcards>false</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+
+    <!-- Test Case 4: Get Product - Not Found (Negative Test) -->
+    <con:testCase id="tc-product-not-found" name="Get Non-Existent Product"
+                  failOnError="false" failTestCaseOnErrors="false" keepSession="false">
+      <con:settings/>
+      <con:testStep type="restrequest" name="GET Non-Existent Product" id="step-not-found">
+        <con:settings/>
+        <con:config service="Product Management API" resourcePath="/products/99999" methodName="GET">
+          <con:restRequest name="GET Non-Existent Product" id="req-not-found" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v2/products</con:endpoint>
+            <con:request/>
+
+            <!-- Assertion: 404 Not Found -->
+            <con:assertion type="Valid HTTP Status Codes" id="assert-404" name="Expect 404 Not Found">
+              <con:configuration>
+                <codes>404</codes>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Error Message Present -->
+            <con:assertion type="Simple Contains" id="assert-not-found-msg" name="Contains Not Found">
+              <con:configuration>
+                <token>not found</token>
+                <ignoreCase>true</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+
+    <con:properties/>
+  </con:testSuite>
+
+  <!-- Test Suite 3: Order Management Tests (SOAP) -->
+  <con:testSuite id="ts-orders" name="Order Management Tests (SOAP)">
+    <con:settings/>
+    <con:runType>SEQUENTIAL</con:runType>
+
+    <!-- Test Case 1: Create Order -->
+    <con:testCase id="tc-create-order" name="Create New Order"
+                  failOnError="true" failTestCaseOnErrors="true" keepSession="false">
+      <con:settings/>
+      <con:testStep type="request" name="SOAP Create Order" id="step-create-order">
+        <con:settings/>
+        <con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:interface>Order Management SOAP</con:interface>
+          <con:operation>CreateOrder</con:operation>
+          <con:request name="SOAP Create Order" id="req-create-order">
+            <con:settings/>
+            <con:encoding>UTF-8</con:encoding>
+            <con:endpoint>http://api.ecommerce.com/soap/orders</con:endpoint>
+            <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                         xmlns:ord="http://ecommerce.com/orders">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ord:CreateOrder>
+         <ord:customerId>12345</ord:customerId>
+         <ord:items>
+            <ord:item>
+               <ord:productId>PROD-001</ord:productId>
+               <ord:quantity>2</ord:quantity>
+               <ord:price>99.99</ord:price>
+            </ord:item>
+            <ord:item>
+               <ord:productId>PROD-002</ord:productId>
+               <ord:quantity>1</ord:quantity>
+               <ord:price>49.99</ord:price>
+            </ord:item>
+         </ord:items>
+         <ord:totalAmount>249.97</ord:totalAmount>
+         <ord:shippingAddress>
+            <ord:street>123 Test St</ord:street>
+            <ord:city>TestCity</ord:city>
+            <ord:zipCode>12345</ord:zipCode>
+         </ord:shippingAddress>
+      </ord:CreateOrder>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+
+            <!-- Assertion: SOAP Response -->
+            <con:assertion type="SOAP Response" id="assert-soap-response" name="Valid SOAP Response"/>
+
+            <!-- Assertion: Not SOAP Fault -->
+            <con:assertion type="Not SOAP Fault" id="assert-not-fault" name="Not SOAP Fault"/>
+
+            <!-- Assertion: XPath Match - Order ID Present -->
+            <con:assertion type="XPath Match" id="assert-order-id" name="Order ID Present">
+              <con:configuration>
+                <path>declare namespace ns1='http://ecommerce.com/orders';
+//ns1:CreateOrderResponse/ns1:orderId</path>
+                <content>.*</content>
+                <allowWildcards>true</allowWildcards>
+                <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                <ignoreComments>false</ignoreComments>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: XPath Match - Status is Created -->
+            <con:assertion type="XPath Match" id="assert-status-created" name="Status is Created">
+              <con:configuration>
+                <path>declare namespace ns1='http://ecommerce.com/orders';
+//ns1:CreateOrderResponse/ns1:status</path>
+                <content>CREATED</content>
+                <allowWildcards>false</allowWildcards>
+                <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                <ignoreComments>false</ignoreComments>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: XPath Match - Total Amount -->
+            <con:assertion type="XPath Match" id="assert-total" name="Total Amount Matches">
+              <con:configuration>
+                <path>declare namespace ns1='http://ecommerce.com/orders';
+//ns1:CreateOrderResponse/ns1:totalAmount</path>
+                <content>249.97</content>
+                <allowWildcards>false</allowWildcards>
+                <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                <ignoreComments>false</ignoreComments>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Contains -->
+            <con:assertion type="Simple Contains" id="assert-success-order" name="Contains Success">
+              <con:configuration>
+                <token>success</token>
+                <ignoreCase>true</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+
+            <con:credentials>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+          </con:request>
+        </con:config>
+      </con:testStep>
+
+      <!-- Groovy Script Step -->
+      <con:testStep type="groovy" name="Validate Order Data" id="step-groovy-validate">
+        <con:settings/>
+        <con:config>
+          <script>// External script reference
+def scriptFile = new File(context.expand('${projectDir}') + '/scripts/validateOrder.groovy')
+if (scriptFile.exists()) {
+    evaluate(scriptFile)
+} else {
+    // Inline validation
+    def response = context.expand('${SOAP Create Order#Response}')
+    assert response.contains('orderId')
+    assert response.contains('CREATED')
+    log.info("Order validation passed")
+}</script>
+        </con:config>
+      </con:testStep>
+
+      <con:properties/>
+    </con:testCase>
+
+    <!-- Test Case 2: Get Order Status -->
+    <con:testCase id="tc-order-status" name="Get Order Status"
+                  failOnError="true" failTestCaseOnErrors="true" keepSession="false">
+      <con:settings/>
+      <con:testStep type="request" name="SOAP Get Order Status" id="step-order-status">
+        <con:settings/>
+        <con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:interface>Order Management SOAP</con:interface>
+          <con:operation>GetOrderStatus</con:operation>
+          <con:request name="SOAP Get Order Status" id="req-order-status">
+            <con:settings/>
+            <con:encoding>UTF-8</con:encoding>
+            <con:endpoint>http://api.ecommerce.com/soap/orders</con:endpoint>
+            <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                         xmlns:ord="http://ecommerce.com/orders">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ord:GetOrderStatus>
+         <ord:orderId>ORD-12345</ord:orderId>
+      </ord:GetOrderStatus>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+
+            <!-- Assertion: SOAP Response -->
+            <con:assertion type="SOAP Response" id="assert-soap" name="Valid SOAP Response"/>
+
+            <!-- Assertion: XPath - Status Field -->
+            <con:assertion type="XPath Match" id="assert-status-field" name="Status Field Present">
+              <con:configuration>
+                <path>declare namespace ns1='http://ecommerce.com/orders';
+//ns1:GetOrderStatusResponse/ns1:status</path>
+                <content>(PENDING|PROCESSING|SHIPPED|DELIVERED)</content>
+                <allowWildcards>true</allowWildcards>
+                <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                <ignoreComments>false</ignoreComments>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: XPath - Tracking Number -->
+            <con:assertion type="XPath Match" id="assert-tracking" name="Tracking Number Present">
+              <con:configuration>
+                <path>declare namespace ns1='http://ecommerce.com/orders';
+//ns1:GetOrderStatusResponse/ns1:trackingNumber</path>
+                <content>.*</content>
+                <allowWildcards>true</allowWildcards>
+                <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                <ignoreComments>false</ignoreComments>
+              </con:configuration>
+            </con:assertion>
+
+            <con:credentials>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+          </con:request>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+
+    <con:properties/>
+  </con:testSuite>
+
+  <!-- Test Suite 4: Payment Processing Tests -->
+  <con:testSuite id="ts-payment" name="Payment Processing Tests">
+    <con:settings/>
+    <con:runType>SEQUENTIAL</con:runType>
+
+    <!-- Test Case 1: Process Payment -->
+    <con:testCase id="tc-process-payment" name="Process Credit Card Payment"
+                  failOnError="true" failTestCaseOnErrors="true" keepSession="false">
+      <con:settings/>
+      <con:testStep type="restrequest" name="POST Payment" id="step-payment">
+        <con:settings/>
+        <con:config service="Payment API" resourcePath="/payments/process" methodName="POST">
+          <con:restRequest name="POST Payment" id="req-payment" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v1/payments</con:endpoint>
+            <con:request>{"orderId":"ORD-12345","amount":249.97,"currency":"USD","cardNumber":"4111111111111111","cvv":"123","expiryDate":"12/25"}</con:request>
+
+            <!-- Assertion: 200 OK -->
+            <con:assertion type="Valid HTTP Status Codes" id="assert-200" name="Payment Accepted">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Transaction ID -->
+            <con:assertion type="JsonPath Match" id="assert-txn-id" name="Transaction ID Present">
+              <con:configuration>
+                <path>$.transactionId</path>
+                <content>TXN-.*</content>
+                <allowWildcards>true</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Status Approved -->
+            <con:assertion type="JsonPath Match" id="assert-approved" name="Status is Approved">
+              <con:configuration>
+                <path>$.status</path>
+                <content>APPROVED</content>
+                <allowWildcards>false</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Amount Matches -->
+            <con:assertion type="JsonPath Match" id="assert-amount" name="Amount Matches">
+              <con:configuration>
+                <path>$.amount</path>
+                <content>249.97</content>
+                <allowWildcards>false</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Card Not in Response (Security) -->
+            <con:assertion type="Simple NotContains" id="assert-no-card" name="Card Number Not Exposed">
+              <con:configuration>
+                <token>4111111111111111</token>
+                <ignoreCase>false</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: CVV Not in Response (Security) -->
+            <con:assertion type="Simple NotContains" id="assert-no-cvv" name="CVV Not Exposed">
+              <con:configuration>
+                <token>123</token>
+                <ignoreCase>false</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+
+      <!-- Delay Step -->
+      <con:testStep type="delay" name="Wait for Processing" id="step-delay">
+        <con:settings/>
+        <con:config>
+          <delay>1000</delay>
+        </con:config>
+      </con:testStep>
+
+      <con:properties/>
+    </con:testCase>
+
+    <!-- Test Case 2: Payment Declined -->
+    <con:testCase id="tc-payment-declined" name="Payment Declined - Insufficient Funds"
+                  failOnError="false" failTestCaseOnErrors="false" keepSession="false">
+      <con:settings/>
+      <con:testStep type="restrequest" name="POST Declined Payment" id="step-declined">
+        <con:settings/>
+        <con:config service="Payment API" resourcePath="/payments/process" methodName="POST">
+          <con:restRequest name="POST Declined Payment" id="req-declined" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v1/payments</con:endpoint>
+            <con:request>{"orderId":"ORD-12346","amount":9999.99,"currency":"USD","cardNumber":"4000000000000002","cvv":"123","expiryDate":"12/25"}</con:request>
+
+            <!-- Assertion: 402 Payment Required or 200 with Declined -->
+            <con:assertion type="Valid HTTP Status Codes" id="assert-declined-status" name="Declined Status">
+              <con:configuration>
+                <codes>200,402</codes>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Status Declined -->
+            <con:assertion type="JsonPath Match" id="assert-declined-msg" name="Status is Declined">
+              <con:configuration>
+                <path>$.status</path>
+                <content>DECLINED</content>
+                <allowWildcards>false</allowWildcards>
+              </con:configuration>
+            </con:assertion>
+
+            <!-- Assertion: Reason Present -->
+            <con:assertion type="JsonPath Existence Match" id="assert-reason" name="Decline Reason Present">
+              <con:configuration>
+                <path>$.declineReason</path>
+                <expectedContent>true</expectedContent>
+              </con:configuration>
+            </con:assertion>
+
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+
+    <con:properties/>
+  </con:testSuite>
+
+  <!-- Test Suite 5: Integration Tests (DISABLED) -->
+  <con:testSuite id="ts-integration" name="End-to-End Integration Tests" disabled="true">
+    <con:settings/>
+    <con:runType>SEQUENTIAL</con:runType>
+
+    <!-- Test Case 1: Complete Purchase Flow -->
+    <con:testCase id="tc-complete-flow" name="Complete Purchase Flow"
+                  failOnError="true" failTestCaseOnErrors="true" keepSession="false">
+      <con:settings/>
+
+      <!-- Step 1: Login -->
+      <con:testStep type="restrequest" name="Login User" id="step-int-login">
+        <con:settings/>
+        <con:config service="User Management API" resourcePath="/auth/login" methodName="POST">
+          <con:restRequest name="Login User" id="req-int-login" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v1</con:endpoint>
+            <con:request>{"username":"testuser","password":"Test@123"}</con:request>
+
+            <con:assertion type="Valid HTTP Status Codes" id="assert-login-ok" name="Login Success">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+
+      <!-- Step 2: Browse Products -->
+      <con:testStep type="restrequest" name="Get Products" id="step-int-products">
+        <con:settings/>
+        <con:config service="Product Management API" resourcePath="/products" methodName="GET">
+          <con:restRequest name="Get Products" id="req-int-products" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v2/products</con:endpoint>
+            <con:request/>
+
+            <con:assertion type="Valid HTTP Status Codes" id="assert-products-ok" name="Products Retrieved">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+
+      <!-- Step 3: Create Order -->
+      <con:testStep type="request" name="Create Order" id="step-int-order">
+        <con:settings/>
+        <con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:interface>Order Management SOAP</con:interface>
+          <con:operation>CreateOrder</con:operation>
+          <con:request name="Create Order" id="req-int-order">
+            <con:settings/>
+            <con:endpoint>http://api.ecommerce.com/soap/orders</con:endpoint>
+            <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                         xmlns:ord="http://ecommerce.com/orders">
+   <soapenv:Body>
+      <ord:CreateOrder>
+         <ord:customerId>12345</ord:customerId>
+         <ord:totalAmount>99.99</ord:totalAmount>
+      </ord:CreateOrder>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+
+            <con:assertion type="SOAP Response" id="assert-order-soap" name="Valid SOAP"/>
+          </con:request>
+        </con:config>
+      </con:testStep>
+
+      <!-- Step 4: Process Payment -->
+      <con:testStep type="restrequest" name="Process Payment" id="step-int-payment">
+        <con:settings/>
+        <con:config service="Payment API" resourcePath="/payments/process" methodName="POST">
+          <con:restRequest name="Process Payment" id="req-int-payment" mediaType="application/json">
+            <con:settings/>
+            <con:endpoint>https://api.ecommerce.com/v1/payments</con:endpoint>
+            <con:request>{"orderId":"ORD-12345","amount":99.99}</con:request>
+
+            <con:assertion type="Valid HTTP Status Codes" id="assert-payment-ok" name="Payment Success">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+
+      <con:properties/>
+    </con:testCase>
+
+    <con:properties/>
+  </con:testSuite>
+
+  <!-- Global Properties -->
+  <con:properties>
+    <con:property>
+      <con:name>base_url</con:name>
+      <con:value>https://api.ecommerce.com</con:value>
+    </con:property>
+    <con:property>
+      <con:name>api_version</con:name>
+      <con:value>v1</con:value>
+    </con:property>
+  </con:properties>
+
+</con:soapui-project>

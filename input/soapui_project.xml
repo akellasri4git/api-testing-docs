@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project
+    xmlns:con="http://eviware.com/soapui/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    name="Sample-SoapUI-AI-POC">
+
+    <!-- ===================== -->
+    <!-- Test Suite 1 -->
+    <!-- ===================== -->
+    <con:testSuite name="AuthenticationSuite">
+
+        <con:testCase name="TC_Login_Valid" disabled="false">
+
+            <!-- REST Request Step -->
+            <con:testStep name="LoginRequest" type="restrequest" disabled="false">
+                <con:config xsi:type="con:RestRequest">
+                    <con:resource>/auth/login</con:resource>
+                    <con:method>POST</con:method>
+                    <con:endpoint>https://api.example.com/auth/login</con:endpoint>
+
+                    <con:assertion name="Status 200" type="Valid HTTP Status Codes" enabled="true">
+                        <con:expected>200</con:expected>
+                    </con:assertion>
+
+                    <con:assertion name="Token Present" type="JsonPath Match" enabled="true">
+                        <con:path>$.token</con:path>
+                    </con:assertion>
+
+                    <con:assertion name="Password Not Present" type="Not Contains" enabled="true">
+                        <con:expected>password</con:expected>
+                    </con:assertion>
+                </con:config>
+            </con:testStep>
+
+            <!-- External Script -->
+            <con:testStep name="ValidateUserScript" type="groovy" disabled="false">
+                <con:script>
+                    loadScript("external_scripts/validate_user.groovy")
+                </con:script>
+            </con:testStep>
+
+        </con:testCase>
+
+        <con:testCase name="TC_Login_Invalid" disabled="true">
+
+            <con:testStep name="InvalidLoginRequest" type="restrequest" disabled="false">
+                <con:config xsi:type="con:RestRequest">
+                    <con:resource>/auth/login</con:resource>
+                    <con:method>POST</con:method>
+                    <con:endpoint>https://api.example.com/auth/login</con:endpoint>
+
+                    <con:assertion name="Status 401" type="Valid HTTP Status Codes" enabled="true">
+                        <con:expected>401</con:expected>
+                    </con:assertion>
+
+                    <con:assertion name="Error Message Present" type="JsonPath Match" enabled="true">
+                        <con:path>$.error</con:path>
+                    </con:assertion>
+                </con:config>
+            </con:testStep>
+
+        </con:testCase>
+
+    </con:testSuite>
+
+    <!-- ===================== -->
+    <!-- Test Suite 2 -->
+    <!-- ===================== -->
+    <con:testSuite name="OrderProcessingSuite">
+
+        <con:testCase name="TC_Create_Order" disabled="false">
+
+            <!-- REST Request -->
+            <con:testStep name="CreateOrderRequest" type="restrequest" disabled="false">
+                <con:config xsi:type="con:RestRequest">
+                    <con:resource>/orders/create</con:resource>
+                    <con:method>POST</con:method>
+                    <con:endpoint>https://api.example.com/orders/create</con:endpoint>
+
+                    <con:assertion name="OrderId Present" type="JsonPath Match" enabled="true">
+                        <con:path>$.orderId</con:path>
+                    </con:assertion>
+
+                    <con:assertion name="Status SUCCESS" type="JsonPath Match" enabled="true">
+                        <con:path>$.status</con:path>
+                    </con:assertion>
+                </con:config>
+            </con:testStep>
+
+            <!-- JMS Queue Step -->
+            <con:testStep name="PublishOrderEvent" type="jms" disabled="false">
+                <con:config xsi:type="con:JmsRequest">
+                    <con:queueName>QUEUE.ORDER.CREATED</con:queueName>
+                </con:config>
+            </con:testStep>
+
+        </con:testCase>
+
+        <con:testCase name="TC_Order_Validation" disabled="false">
+
+            <con:testStep name="ValidateOrderScript" type="groovy" disabled="false">
+                <con:script>
+                    loadScript("external_scripts/validate_order.groovy")
+                </con:script>
+            </con:testStep>
+
+        </con:testCase>
+
+    </con:testSuite>
+
+</con:soapui-project>

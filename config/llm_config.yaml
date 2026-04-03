@@ -1,0 +1,20 @@
+# LLM Configuration
+
+llm:
+  # Model selection - use one of your installed Ollama models
+  # Check available models: ollama list
+  # Popular options:
+  #   - mistral:latest (good for analysis, 4.4GB)
+  #   - phi3:latest (faster, smaller, 2.2GB)
+  #   - llama3.1:8b (recommended but needs: ollama pull llama3.1:8b)
+  model: mistral:latest
+
+  # Generation parameters
+  temperature: 0.1  # Lower = more focused, higher = more creative
+  max_tokens: 1500  # Maximum response length
+
+# Prompt configuration
+prompts:
+  test_case_explainer: prompts/test_case_explainer.txt
+  project_summary: prompts/project_summary.txt
+  system: prompts/system.txt

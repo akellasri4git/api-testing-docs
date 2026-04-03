@@ -1,0 +1,13 @@
+app:
+  name: soapui-ai-docs
+  version: 0.1.0
+
+paths:
+  input_project: input/Project-1-soapui-project.xml
+  external_scripts: input/external_scripts
+  output_dir: output
+
+analysis:
+  include_disabled_tests: true
+  resolve_external_scripts: true
+  max_script_depth: 3
