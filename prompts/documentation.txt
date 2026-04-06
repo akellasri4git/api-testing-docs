@@ -30,9 +30,5 @@ SoapUI Project Documentation
          - Clearly explain what is validated
          - Merge duplicate validations
 
-3. Duplicate & Redundancy Analysis
-   - Identify test cases that do the same thing
-   - Explain why they are similar or duplicated
-
 4. High-Level Overview
-   - 5–6 bullet points explaining the overall purpose
+   - 2-3 bullet points explaining the overall purpose
