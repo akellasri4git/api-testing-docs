@@ -1,0 +1,136 @@
+# ============================================
+# PROJECT CONFIGURATION
+# ============================================
+
+# Input SoapUI project file (relative to project root)
+INPUT_PROJECT_FILE=input/Complex-ECommerce-soapui-project.xml
+
+# Available sample projects:
+# - input/small_soapui_project.xml
+# - input/Google-Maps-soapui-project.xml
+# - input/Project-1-soapui-project.xml
+# - input/Amazon-soapui-project.xml
+# - input/Complex-ECommerce-soapui-project.xml
+
+# ============================================
+# LLM PROVIDER SWITCH
+# ============================================
+#
+# SIMPLE SWITCH - Just change the provider name:
+# - 'ollama'    = 100% Local (Secure, Slow, Free)
+# - 'groq'      = Cloud (Fast, Free, Data sent to cloud)
+# - 'openai'    = Cloud (Fast, Paid, Data sent to cloud)
+# - 'anthropic' = Cloud (High Quality, Paid, Data sent to cloud)
+# - 'azure'     = Enterprise Cloud (Secure, Paid, Company tenant)
+#
+# ============================================
+
+LLM_PROVIDER=ollama
+
+# ============================================
+# OPTION 1: OLLAMA (LOCAL - RECOMMENDED FOR PRODUCTION)
+# ============================================
+# ✅ 100% Local - No data sent externally
+# ✅ Completely FREE
+# ✅ Works offline
+# ⚠️  Slower (25-30 minutes for 12 test cases)
+# ⚠️  Requires 8GB+ RAM
+#
+# Setup:
+#   1. Install: https://ollama.ai
+#   2. Run: ollama pull llama3.1:8b
+#   3. Set LLM_PROVIDER=ollama above
+# ============================================
+
+OLLAMA_MODEL=mistral:latest
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+
+# ============================================
+# OPTION 2: GROQ (CLOUD - FAST FOR DEMOS)
+# ============================================
+# ✅ Very fast (30-40 seconds for 12 test cases)
+# ✅ FREE (with API key)
+# ⚠️  Data sent to cloud (not for sensitive projects)
+#
+# Setup:
+#   1. Get free API key: https://console.groq.com
+#   2. Set LLM_PROVIDER=groq above
+# ============================================
+GROQ_API_KEY=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
+# GROQ_API_KEY=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
+GROQ_MODEL=llama-3.3-70b-versatile
+
+# ============================================
+# OPTION 3: OPENAI (CLOUD - PAID)
+# ============================================
+# ✅ High quality results
+# ✅ Fast
+# ⚠️  Paid service ($$$)
+# ⚠️  Data sent to cloud
+#
+# Setup:
+#   1. Get API key: https://platform.openai.com/api-keys
+#   2. Add credits to account
+#   3. Set LLM_PROVIDER=openai above
+# ============================================
+
+OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_MODEL=gpt-4o-mini
+
+# ============================================
+# OPTION 4: ANTHROPIC CLAUDE (CLOUD - PAID)
+# ============================================
+# ✅ Highest quality results
+# ✅ Best reasoning
+# ⚠️  Paid service ($$$)
+# ⚠️  Data sent to cloud
+#
+# Setup:
+#   1. Get API key: https://console.anthropic.com
+#   2. Set LLM_PROVIDER=anthropic above
+# ============================================
+
+ANTHROPIC_API_KEY=your-anthropic-api-key-here
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+
+# ============================================
+# OPTION 5: AZURE OPENAI (ENTERPRISE - PAID)
+# ============================================
+# ✅ Enterprise-grade security
+# ✅ Data stays in company tenant
+# ✅ Compliance (SOC 2, HIPAA, ISO 27001)
+# ⚠️  Paid service ($$$)
+# ⚠️  Requires Azure subscription
+#
+# Setup:
+#   1. Create Azure OpenAI resource
+#   2. Deploy a model
+#   3. Set LLM_PROVIDER=azure above
+# ============================================
+
+AZURE_OPENAI_KEY=your-azure-key
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT=gpt-4
+
+# ============================================
+# LLM PARAMETERS (Applied to all providers)
+# ============================================
+
+LLM_TEMPERATURE=0.1
+LLM_MAX_TOKENS=3000
+LLM_TIMEOUT=600
+
+# ============================================
+# QUICK REFERENCE
+# ============================================
+#
+# For Demo/Testing (Fast):
+#   LLM_PROVIDER=groq
+#
+# For Company/Production (Secure):
+#   LLM_PROVIDER=ollama
+#
+# For Enterprise (Compliant):
+#   LLM_PROVIDER=azure
+#
+# ============================================
