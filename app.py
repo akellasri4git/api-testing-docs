@@ -23,6 +23,7 @@ from core.testcase_llm_input_builder import TestCaseLLMInputBuilder
 from core.prompt_loader import PromptLoader
 from core.api_inventory_analyzer import APIInventoryAnalyzer, format_inventory_markdown
 from scripts.md_to_docx import MarkdownToDocxConverter
+from scripts.md_to_pdf import MarkdownToPdfConverter
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -45,7 +46,7 @@ def allowed_file(filename):
     return ext in ['xml', 'json']
 
 
-def generate_documentation_task(job_id, file_path, provider, model, progress_queue):
+def generate_documentation_task(job_id, file_path, provider, model, document_type, progress_queue):
     """
     Background task to generate documentation with progress updates
     Uses fast MD→DOCX conversion (same as CLI pipeline)
@@ -185,27 +186,49 @@ def generate_documentation_task(job_id, file_path, provider, model, progress_que
         markdown_path = Path(app.config['OUTPUT_FOLDER']) / markdown_filename
         markdown_path.write_text(markdown_content, encoding='utf-8')
 
-        # Step 5: Convert Markdown to DOCX (95%)
-        progress_queue.put({'job_id': job_id, 'progress': 95, 'message': 'Converting to Word document...'})
+        # Step 5: Convert Markdown to selected format (95%)
+        if document_type.lower() == 'pdf':
+            progress_queue.put({'job_id': job_id, 'progress': 95, 'message': 'Converting to PDF document...'})
 
-        # Create meaningful filename: Understanding_Document_<ProjectName>_<Timestamp>.docx
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Sanitize project name for filename
-        safe_project_name = "".join(c for c in project_name if c.isalnum() or c in (' ', '-', '_')).strip()
-        safe_project_name = safe_project_name.replace(' ', '_')
-        docx_filename = f"Understanding_Document_{safe_project_name}_{timestamp}.docx"
-        docx_path = Path(app.config['OUTPUT_FOLDER']) / docx_filename
+            # Create meaningful filename: Understanding_Document_<ProjectName>_<Timestamp>.pdf
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # Sanitize project name for filename
+            safe_project_name = "".join(c for c in project_name if c.isalnum() or c in (' ', '-', '_')).strip()
+            safe_project_name = safe_project_name.replace(' ', '_')
+            pdf_filename = f"Understanding_Document_{safe_project_name}_{timestamp}.pdf"
+            pdf_path = Path(app.config['OUTPUT_FOLDER']) / pdf_filename
 
-        md_converter = MarkdownToDocxConverter(str(markdown_path))
-        md_converter.convert(str(docx_path))
+            pdf_converter = MarkdownToPdfConverter(str(markdown_path))
+            pdf_converter.convert(str(pdf_path))
 
-        progress_queue.put({
-            'job_id': job_id,
-            'progress': 100,
-            'message': 'Documentation generated successfully! ⚡',
-            'download_url': f'/download/{docx_filename}',
-            'status': 'completed'
-        })
+            progress_queue.put({
+                'job_id': job_id,
+                'progress': 100,
+                'message': 'Documentation generated successfully! ⚡',
+                'download_url': f'/download/{pdf_filename}',
+                'status': 'completed'
+            })
+        else:  # Default to DOCX
+            progress_queue.put({'job_id': job_id, 'progress': 95, 'message': 'Converting to Word document...'})
+
+            # Create meaningful filename: Understanding_Document_<ProjectName>_<Timestamp>.docx
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # Sanitize project name for filename
+            safe_project_name = "".join(c for c in project_name if c.isalnum() or c in (' ', '-', '_')).strip()
+            safe_project_name = safe_project_name.replace(' ', '_')
+            docx_filename = f"Understanding_Document_{safe_project_name}_{timestamp}.docx"
+            docx_path = Path(app.config['OUTPUT_FOLDER']) / docx_filename
+
+            md_converter = MarkdownToDocxConverter(str(markdown_path))
+            md_converter.convert(str(docx_path))
+
+            progress_queue.put({
+                'job_id': job_id,
+                'progress': 100,
+                'message': 'Documentation generated successfully! ⚡',
+                'download_url': f'/download/{docx_filename}',
+                'status': 'completed'
+            })
 
     except Exception as e:
         progress_queue.put({
@@ -237,9 +260,10 @@ def upload_file():
     if not allowed_file(file.filename):
         return jsonify({'error': 'Only XML (SoapUI) or JSON (Postman) files are allowed'}), 400
 
-    # Get provider and model
+    # Get provider, model, and document type
     provider = request.form.get('provider', 'groq').lower()
     model = request.form.get('model', '')
+    document_type = request.form.get('document_type', 'docx').lower()
 
     # Save uploaded file
     filename = secure_filename(file.filename)
@@ -255,7 +279,7 @@ def upload_file():
     # Start background processing
     thread = threading.Thread(
         target=generate_documentation_task,
-        args=(job_id, str(filepath), provider, model, progress_queue)
+        args=(job_id, str(filepath), provider, model, document_type, progress_queue)
     )
     thread.daemon = True
     thread.start()

@@ -456,6 +456,15 @@
                         <option value="">Default model</option>
                     </select>
                 </div>
+
+                <!-- Document Type Selection -->
+                <div class="form-group">
+                    <label for="document_type">Document Type</label>
+                    <select id="document_type" name="document_type">
+                        <option value="docx">Word Document (.docx)</option>
+                        <option value="pdf">PDF Document (.pdf)</option>
+                    </select>
+                </div>
             </div>
 
             <div class="card">
@@ -661,6 +670,7 @@
         document.getElementById('generate-btn').addEventListener('click', function() {
             const provider = document.getElementById('provider').value;
             const model = document.getElementById('model').value;
+            const documentType = document.getElementById('document_type').value;
 
             if (!selectedFile || !provider) return;
 
@@ -677,6 +687,7 @@
             formData.append('file', selectedFile);
             formData.append('provider', provider);
             formData.append('model', model);
+            formData.append('document_type', documentType);
 
             fetch('/upload', {
                 method: 'POST',
